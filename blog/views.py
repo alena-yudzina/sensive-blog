@@ -1,7 +1,8 @@
-from django.db.models.query import Prefetch
 from django.shortcuts import render
-from blog.models import Comment, Post, Tag, User
+from blog.models import Post, Tag
 from django.db.models import Count
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import Http404
 
 
 def serialize_post(post):
@@ -56,11 +57,14 @@ def index(request):
 
 
 def post_detail(request, slug):
-    post = Post.objects \
-        .select_related('author') \
-        .annotate(likes_amount=Count('likes')) \
-        .fetch_tags_with_posts_count() \
-        .get(slug=slug)
+    try:
+        post = Post.objects \
+            .select_related('author') \
+            .annotate(likes_amount=Count('likes')) \
+            .fetch_tags_with_posts_count() \
+            .get(slug=slug)
+    except ObjectDoesNotExist:
+        raise Http404("No Post matches the given query")
 
     comments = post.comments.select_related('author')
     serialized_comments = []
@@ -105,7 +109,10 @@ def post_detail(request, slug):
 
 
 def tag_filter(request, tag_title):
-    tag = Tag.objects.get(title=tag_title)
+    try:
+        tag = Tag.objects.get(title=tag_title)
+    except ObjectDoesNotExist:
+        raise Http404("No Tag matches the given query")
 
     most_popular_tags = Tag.objects \
         .popular()[:5] \
