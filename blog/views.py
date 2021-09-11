@@ -63,7 +63,7 @@ def post_detail(request, slug):
             .annotate(likes_amount=Count('likes')) \
             .fetch_tags_with_posts_count() \
             .get(slug=slug)
-    except ObjectDoesNotExist:
+    except Post.DoesNotExist:
         raise Http404("No Post matches the given query")
 
     comments = post.comments.select_related('author')
@@ -111,7 +111,7 @@ def post_detail(request, slug):
 def tag_filter(request, tag_title):
     try:
         tag = Tag.objects.get(title=tag_title)
-    except ObjectDoesNotExist:
+    except Tag.DoesNotExist:
         raise Http404("No Tag matches the given query")
 
     most_popular_tags = Tag.objects \
